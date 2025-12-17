@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Horario Universitario - Uniminuto</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #38a7f6ff 0%, #38b2eaff 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .schedule-container {
+            padding: 30px;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        th {
+            background: linear-gradient(135deg, #3d5ef2ff 0%, #3a4bdeff 100%);
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 1.1em;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        td {
+            border: 2px solid #e0e0e0;
+            padding: 10px;
+            text-align: center;
+            vertical-align: top;
+            height: 80px;
+            position: relative;
+        }
+
+        td.time {
+            background: #f5f5f5;
+            font-weight: 600;
+            color: #333;
+            width: 100px;
+        }
+
+        .class {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            border-radius: 8px;
+            padding: 8px;
+            margin: 2px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            font-size: 0.85em;
+        }
+
+        .class:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .class.arquitectura {
+            background: linear-gradient(135deg, #e82222ff 0%, #f20c2aff 100%);
+        }
+
+        .class.basedatos {
+            background: linear-gradient(135deg, #0b5493ff 0%, #0a0883ff 100%);
+        }
+
+        .class.estructura {
+            background: linear-gradient(135deg, #4aee0fff 0%, #6ff212ff 100%);
+        }
+
+        .class.matematica {
+            background: linear-gradient(135deg, #15c4c4ff 0%, #40a7deff 100%);
+        }
+
+        .class.programacion {
+            background: linear-gradient(135deg, #ede60cff 0%, #f1c918ff 100%);
+        }
+
+        .class.etica {
+            background: linear-gradient(135deg, #f4980eff 0%, #e49f1fff 100%);
+        }
+
+        .class-name {
+            font-weight: bold;
+            margin-bottom: 3px;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+        }
+
+        .class-room {
+            font-size: 0.9em;
+            color: rgba(255,255,255,0.95);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.7);
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            background: white;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 600px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            animation: slideIn 0.3s;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .close:hover {
+            color: #000;
+        }
+
+        .modal-header {
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+
+        .modal-header h2 {
+            color: #1e3c72;
+        }
+
+        .info-row {
+            margin: 15px 0;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .legend {
+            padding: 20px 30px;
+            background: #f8f9fa;
+            border-top: 2px solid #e0e0e0;
+        }
+
+        .legend h3 {
+            color: #1e3c72;
+            margin-bottom: 15px;
+        }
+
+        .legend-items {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .legend-color {
+            width: 30px;
+            height: 30px;
+            border-radius: 5px;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+            
+            .schedule-container {
+                padding: 15px;
+            }
+            
+            th, td {
+                font-size: 0.85em;
+                padding: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📚 Horario Académico</h1>
+            <p>Ingeniería de Sistemas - Uniminuto Engativá</p>
+            <p>Período: 10/02/2026 - 07/06/2026</p>
+        </div>
+
+        <div class="schedule-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Hora</th>
+                        <th>Lunes</th>
+                        <th>Martes</th>
+                        <th>Miércoles</th>
+                        <th>Jueves</th>
+                        <th>Viernes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="time">10:00 AM<br>11:29 AM</td>
+                        <td></td>
+                        <td>
+                            <div class="class etica" onclick="showDetails('Ética Profesional', 'Martes 10:00 AM - 11:29 AM', 'Edificio Sincrónico - SINCR', 'Campus Externo - SINCRÓNICO', 'NRC: 84298')">
+                                <div class="class-name">Ética Profesional</div>
+                                <div class="class-room">SINCR</div>
+                            </div>
+                        </td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <td class="time">3:15 PM<br>4:44 PM</td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td>
+                            <div class="class programacion" onclick="showDetails('Programación Web', 'Viernes 3:15 PM - 4:44 PM', 'Edif. Rafael Garcia Herreros - A408LS16', 'Engativá Presencial', 'NRC: 84911')">
+                                <div class="class-name">Programación Web</div>
+                                <div class="class-room">A408LS16</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="time">4:45 PM<br>6:14 PM</td>
+                        <td>
+                            <div class="class programacion" onclick="showDetails('Programación Web', 'Lunes 4:45 PM - 6:14 PM', 'Edif. Rafael Garcia Herreros - A402LS25', 'Engativá Presencial', 'NRC: 84911')">
+                                <div class="class-name">Programación Web</div>
+                                <div class="class-room">A402LS25</div>
+                            </div>
+                        </td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <td class="time">6:15 PM<br>7:44 PM</td>
+                        <td>
+                            <div class="class basedatos" onclick="showDetails('Base de Datos Masivas', 'Lunes 6:15 PM - 7:44 PM', 'Edif. Rafael Garcia Herreros - A402LS25', 'Engativá Presencial', 'NRC: 83355')">
+                                <div class="class-name">Base de Datos Masivas</div>
+                                <div class="class-room">A402LS25</div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="class matematica" onclick="showDetails('Matemática Discreta', 'Martes 6:15 PM - 7:44 PM', 'Edificio Sincrónico - SINCR', 'Campus Externo - SINCRÓNICO', 'NRC: 80911')">
+                                <div class="class-name">Matemática Discreta</div>
+                                <div class="class-room">SINCR</div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="class arquitectura" onclick="showDetails('Arquitectura de Software', 'Miércoles 6:15 PM - 7:44 PM', 'Edif. Rafael Garcia Herreros - A404LS26', 'Engativá Presencial', 'NRC: 84990')">
+                                <div class="class-name">Arquitectura de Software</div>
+                                <div class="class-room">A404LS26</div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="class estructura" onclick="showDetails('Estructura de Inter Serv y Ser', 'Jueves 6:15 PM - 7:44 PM', 'Edif. Rafael Garcia Herreros - A404LS26', 'Engativá Presencial', 'NRC: 85043')">
+                                <div class="class-name">Estructura de Inter Serv y Ser</div>
+                                <div class="class-room">A404LS26</div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="class basedatos" onclick="showDetails('Base de Datos Masivas', 'Viernes 6:15 PM - 7:44 PM', 'Edif. Rafael Garcia Herreros - A312LS20', 'Engativá Presencial', 'NRC: 83355')">
+                                <div class="class-name">Base de Datos Masivas</div>
+                                <div class="class-room">A312LS20</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="time">7:45 PM<br>9:14 PM</td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td>
+                            <div class="class matematica" onclick="showDetails('Matemática Discreta', 'Viernes 7:45 PM - 9:14 PM', 'Edificio Sincrónico - SINCR', 'Campus Externo - SINCRÓNICO', 'NRC: 80911')">
+                                <div class="class-name">Matemática Discreta</div>
+                                <div class="class-room">SINCR</div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="time">8:30 PM<br>9:59 PM</td>
+                        <td></td>
+                        <td></td>
+                        <td>
+                            <div class="class estructura" onclick="showDetails('Estructura de Inter Serv y Ser', 'Miércoles 8:30 PM - 9:59 PM', 'Edif. Rafael Garcia Herreros - A404LS26', 'Engativá Presencial', 'NRC: 85043')">
+                                <div class="class-name">Estructura de Inter Serv y Ser</div>
+                                <div class="class-room">A404LS26</div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="class arquitectura" onclick="showDetails('Arquitectura de Software', 'Jueves 8:30 PM - 9:59 PM', 'Edif. Rafael Garcia Herreros - A404LS26', 'Engativá Presencial', 'NRC: 84990')">
+                                <div class="class-name">Arquitectura de Software</div>
+                                <div class="class-room">A404LS26</div>
+                            </div>
+                        </td>
+                        <td></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="legend">
+            <h3>Leyenda de Materias</h3>
+            <div class="legend-items">
+                <div class="legend-item">
+                    <div class="legend-color arquitectura"></div>
+                    <span>Arquitectura de Software</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color basedatos"></div>
+                    <span>Base de Datos Masivas</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color estructura"></div>
+                    <span>Estructura de Inter Serv y Ser</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color matematica"></div>
+                    <span>Matemática Discreta</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color programacion"></div>
+                    <span>Programación Web</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color etica"></div>
+                    <span>Ética Profesional</span>
+                </div>
+            </div>
+            <p style="margin-top: 15px; color: #666; font-size: 0.9em;">
+                📝 <strong>Nota:</strong> Plan de Negocios es virtual (sin horario fijo) - NRC: 2457
+            </p>
+        </div>
+    </div>
+
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <div class="modal-header">
+                <h2 id="modal-title"></h2>
+            </div>
+            <div id="modal-body"></div>
+        </div>
+    </div>
+
+    <script>
+        function showDetails(name, time, room, location, nrc) {
+            document.getElementById('modal-title').textContent = name;
+            document.getElementById('modal-body').innerHTML = `
+                <div class="info-row">
+                    <div class="info-label">⏰ Horario</div>
+                    <div>${time}</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">📍 Salón</div>
+                    <div>${room}</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">🏢 Ubicación</div>
+                    <div>${location}</div>
+                </div>
+                <div class="info-row">
+                    <div class="info-label">🔢 Código</div>
+                    <div>${nrc}</div>
+                </div>
+            `;
+            document.getElementById('modal').style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('modal').style.display = 'none';
+        }
+
+        window.onclick = function(event) {
+            const modal = document.getElementById('modal');
+            if (event.target == modal) {
+                modal.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>
